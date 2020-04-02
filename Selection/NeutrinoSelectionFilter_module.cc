@@ -226,10 +226,17 @@ bool NeutrinoSelectionFilter::filter(art::Event &e)
 
   BuildPFPMap(pfp_proxy);
 
+
+std::cout<<_analysisToolsVec.size()<<std::endl;
   for (size_t i = 0; i < _analysisToolsVec.size(); i++)
   {
-    _analysisToolsVec[i]->analyzeEvent(e, fData); //fixme add more arguments, make other functions down the line...
+    std::cout<<"Which tool?: "<<i<<std::endl;
+    _analysisToolsVec[i]->analyzeEvent(e, fData); 
+    std::cout<<"finished one"<<std::endl;//fixme add more arguments, make other functions down the line...
   }
+
+  
+  
 
   // Should you keep this event? Yes, but only if there's a neutrino.
   // On the other hand, you can fill the tree even if you discart the event
@@ -297,6 +304,7 @@ bool NeutrinoSelectionFilter::filter(art::Event &e)
       }
 
       for (size_t i = 0; i < _analysisToolsVec.size(); i++) {
+        std::cout<<"Which tool?Slide: "<<i<<std::endl;
         _analysisToolsVec[i]->analyzeSlice(e, slice_pfp_v, fData, selected);
       }
 

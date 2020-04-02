@@ -2,6 +2,8 @@
 #define ANALYSIS_DEFAULTANALYSIS_CXX
 
 #include <iostream>
+
+#include <string>
 #include "AnalysisToolBase.h"
 
 #include "ubobj/CRT/CRTHit.hh"
@@ -25,12 +27,19 @@
 #include "canvas/Persistency/Common/TriggerResults.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
+
+// Trigger objects
+#include "lardataobj/RawData/TriggerData.h"
+#include "ubobj/Trigger/ubdaqSoftwareTriggerData.h"
+
+
+
 namespace analysis
 {
 ////////////////////////////////////////////////////////////////////////
 //
-// Class:       DefaultAnalysis
-// File:        DefaultAnalysis.cc
+// Class:       DefaultAnalysisNotNu
+// File:        DefaultAnalysisNotNu.cc
 //
 //              A basic analysis example
 //
@@ -39,10 +48,11 @@ namespace analysis
 // TBD
 //
 // Created by Giuseppe Cerati (cerati@fnal.gov) on 03/15/2019
-//
+// Copied and apapted not to use neutrino truth info by Owen
+//and to add in SWtirgger info
 ////////////////////////////////////////////////////////////////////////
 
-class DefaultAnalysis : public AnalysisToolBase
+class DefaultAnalysisNotNu : public AnalysisToolBase
 {
 
 public:
@@ -51,12 +61,12 @@ public:
      *
      *  @param  pset
      */
-  DefaultAnalysis(const fhicl::ParameterSet &pset);
+  DefaultAnalysisNotNu(const fhicl::ParameterSet &pset);
 
   /**
      *  @brief  Destructor
      */
-  ~DefaultAnalysis(){};
+  ~DefaultAnalysisNotNu(){};
 
   // provide for initialization
   void configure(fhicl::ParameterSet const &pset);
@@ -266,6 +276,14 @@ private:
   float _true_p_visible;
   float _true_e_visible;
   float _leeweight;
+
+
+  //Added by Owen for SWtrig info
+
+  std::vector<std::string> _TriggerName;
+  std::vector<bool> _pass_algo;
+  std::vector<bool> _pass_prescale;
+  std::vector<bool> _pass_swtrig;
 };
 
 //----------------------------------------------------------------------------
@@ -275,7 +293,7 @@ private:
 ///
 /// pset - Fcl parameters.
 ///
-DefaultAnalysis::DefaultAnalysis(const fhicl::ParameterSet &p)
+DefaultAnalysisNotNu::DefaultAnalysisNotNu(const fhicl::ParameterSet &p)
 {
   fCRTVetoproducer = p.get<art::InputTag>("CRTVetoproducer", ""); // default is no CRT veto
   fCLSproducer = p.get<art::InputTag>("CLSproducer");
@@ -309,7 +327,7 @@ DefaultAnalysis::DefaultAnalysis(const fhicl::ParameterSet &p)
 ///
 /// pset - Fcl parameter set.
 ///
-void DefaultAnalysis::configure(fhicl::ParameterSet const &p)
+void DefaultAnalysisNotNu::configure(fhicl::ParameterSet const &p)
 {
 }
 
@@ -320,9 +338,9 @@ void DefaultAnalysis::configure(fhicl::ParameterSet const &p)
 ///
 /// pset - Fcl parameter set.
 ///
-void DefaultAnalysis::analyzeEvent(art::Event const &e, bool fData)
+void DefaultAnalysisNotNu::analyzeEvent(art::Event const &e, bool fData)
 {
-  std::cout << "[DefaultAnalysis::analyzeEvent] Run: " << e.run() << ", SubRun: " << e.subRun() << ", Event: " << e.event() << std::endl;
+  std::cout << "[DefaultAnalysisNotNu::analyzeEvent] Run: " << e.run() << ", SubRun: " << e.subRun() << ", Event: " << e.event() << std::endl;
   
   // store common optical filter tag
   if (!fData) {
@@ -340,11 +358,40 @@ void DefaultAnalysis::analyzeEvent(art::Event const &e, bool fData)
   e.getByLabel(swtrig_tag, swtrig_handle);
   if (swtrig_handle.isValid())
   {
+
+
+
     if (swtrig_handle->accept() == true)
       _swtrig = 1;
     else
       _swtrig = 0;
   } // if software trigger run by this producer
+
+
+
+
+    std::string triggerLabel;
+    if (fData) {triggerLabel = std::string("daq");}
+    else {triggerLabel = std::string("swtrigger");}
+    art::InputTag triggerTag {triggerLabel};
+    const auto& triggerHandle = e.getValidHandle< raw::ubdaqSoftwareTriggerData >(triggerTag);
+    std::vector<std::string> triggerName = triggerHandle->getListOfAlgorithms();
+    for (int j=0; j!=triggerHandle->getNumberOfAlgorithms(); j++)
+    {
+      // Check trigger
+      std::cout<<triggerName[j]<<": ";
+      std::cout<<triggerHandle->passedAlgo(triggerName[j])<<std::endl;
+
+      _pass_algo.push_back(triggerHandle->passedAlgo(triggerName[j]));
+      _pass_prescale.push_back(triggerHandle->passedPrescaleAlgo(triggerName[j]));
+      _pass_swtrig.push_back(triggerHandle->passedAlgo(triggerName[j]) && triggerHandle->passedPrescaleAlgo(triggerName[j]));
+      // // Assign values
+      _TriggerName.push_back(triggerLabel+std::string("_")+triggerName[j]);
+      // ctf.trigger_triggerAlgoPass.push_back(pass_algo);
+      // ctf.trigger_triggerPrescalePass.push_back(pass_prescale);
+      // ctf.trigger_triggerPass.push_back(pass);
+    }
+
 
   if (!fData)
   {
@@ -366,7 +413,7 @@ void DefaultAnalysis::analyzeEvent(art::Event const &e, bool fData)
     }
     else
     {
-      std::cout << "[DefaultAnalysis::analyzeEvent] LEE MCEventWeight not present" << std::endl;
+      std::cout << "[DefaultAnalysisNotNu::analyzeEvent] LEE MCEventWeight not present" << std::endl;
     }
     
     // SaveTruth
@@ -395,7 +442,7 @@ void DefaultAnalysis::analyzeEvent(art::Event const &e, bool fData)
   
 }
 
-void DefaultAnalysis::analyzeSlice(art::Event const &e, std::vector<ProxyPfpElem_t> &slice_pfp_v, bool fData, bool selected)
+void DefaultAnalysisNotNu::analyzeSlice(art::Event const &e, std::vector<ProxyPfpElem_t> &slice_pfp_v, bool fData, bool selected)
 {
 
   
@@ -800,7 +847,7 @@ void DefaultAnalysis::analyzeSlice(art::Event const &e, std::vector<ProxyPfpElem
     _pass = 1;
 }
 
-void DefaultAnalysis::setBranches(TTree *_tree)
+void DefaultAnalysisNotNu::setBranches(TTree *_tree)
 {
   _tree->Branch("leeweight", &_leeweight, "leeweight/F");
 
@@ -974,9 +1021,18 @@ void DefaultAnalysis::setBranches(TTree *_tree)
   _tree->Branch("endmuonprocess", &_endmuonprocess);
 
   _tree->Branch("endmuonmichel", &_endmuonmichel, "endmuonmichel/F");
+
+
+  //added by Owen
+  _tree->Branch("TriggerName", "std::vector <string>", &_TriggerName);
+  _tree->Branch("pass_algo", "std::vector <bool>", &_pass_algo);
+  _tree->Branch("pass_prescale", "std::vector <bool>", &_pass_prescale);
+  _tree->Branch("pass_swtrig", "std::vector <bool>", &_pass_swtrig);
+
+
 }
 
-void DefaultAnalysis::resetTTree(TTree *_tree)
+void DefaultAnalysisNotNu::resetTTree(TTree *_tree)
 {
   _leeweight = 0;
   _nu_e = std::numeric_limits<float>::lowest();
@@ -1129,9 +1185,16 @@ void DefaultAnalysis::resetTTree(TTree *_tree)
   _true_p_visible = 0;
 
   _true_e_visible = 0;
+
+
+  _TriggerName.clear();
+  _pass_algo.clear();
+  _pass_prescale.clear();
+  _pass_swtrig.clear();
+
 }
 
-void DefaultAnalysis::SaveTruth(art::Event const &e)
+void DefaultAnalysisNotNu::SaveTruth(art::Event const &e)
 {
   
   // load MCTruth
@@ -1141,34 +1204,34 @@ void DefaultAnalysis::SaveTruth(art::Event const &e)
   auto const &mcp_h = e.getValidHandle<std::vector<simb::MCParticle>>(fMCPproducer);
   
   auto mct = mct_h->at(0);
-  auto neutrino = mct.GetNeutrino();
-  auto nu = neutrino.Nu();
+  // auto neutrino = mct.GetNeutrino();
+  // auto nu = neutrino.Nu();
 
-  _ccnc = neutrino.CCNC();
-  _interaction = neutrino.Mode();
-  _nu_pdg = nu.PdgCode();
-  _nu_e = nu.Trajectory().E(0);
-  _lep_e = neutrino.Lepton().E();
+  // _ccnc = neutrino.CCNC();
+  // _interaction = neutrino.Mode();
+  // _nu_pdg = nu.PdgCode();
+  // _nu_e = nu.Trajectory().E(0);
+  // _lep_e = neutrino.Lepton().E();
 
-  _true_nu_vtx_t = nu.T();
-  _true_nu_vtx_x = nu.Vx();
-  _true_nu_vtx_y = nu.Vy();
-  _true_nu_vtx_z = nu.Vz();
+  // _true_nu_vtx_t = nu.T();
+  // _true_nu_vtx_x = nu.Vx();
+  // _true_nu_vtx_y = nu.Vy();
+  // _true_nu_vtx_z = nu.Vz();
 
-  float _true_nu_vtx_sce[3];
-  searchingfornues::True2RecoMappingXYZ(_true_nu_vtx_t, _true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z, _true_nu_vtx_sce);
+  // float _true_nu_vtx_sce[3];
+  // searchingfornues::True2RecoMappingXYZ(_true_nu_vtx_t, _true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z, _true_nu_vtx_sce);
 
-  _true_nu_vtx_sce_x = _true_nu_vtx_sce[0];
-  _true_nu_vtx_sce_y = _true_nu_vtx_sce[1];
-  _true_nu_vtx_sce_z = _true_nu_vtx_sce[2];
+  // _true_nu_vtx_sce_x = _true_nu_vtx_sce[0];
+  // _true_nu_vtx_sce_y = _true_nu_vtx_sce[1];
+  // _true_nu_vtx_sce_z = _true_nu_vtx_sce[2];
 
-  _theta = neutrino.Theta();
-  _nu_pt = neutrino.Pt();
+  // _theta = neutrino.Theta();
+  // _nu_pt = neutrino.Pt();
 
-  double vtx[3] = {_true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z};
-  _isVtxInFiducial = searchingfornues::isFiducial(vtx,
-                                                  fFidvolXstart, fFidvolYstart, fFidvolZstart,
-                                                  fFidvolXend, fFidvolYend, fFidvolZend);
+  // double vtx[3] = {_true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z};
+  // _isVtxInFiducial = searchingfornues::isFiducial(vtx,
+  //                                                 fFidvolXstart, fFidvolYstart, fFidvolZstart,
+  //                                                 fFidvolXend, fFidvolYend, fFidvolZend);
 
   _nelec = 0;
   _nmuon = 0;
@@ -1187,11 +1250,22 @@ void DefaultAnalysis::SaveTruth(art::Event const &e)
   {
 
     auto const &part = mct.GetParticle(i);
+
+
+
+    //
+
+
     if (part.StatusCode() != 1)
     {
       continue;
     }
 
+
+
+
+
+    
     total_p += part.Momentum(0);
     // if muon
     if ((std::abs(part.PdgCode()) == muon->PdgCode()) and (part.StatusCode() == 1))
@@ -1397,7 +1471,7 @@ void DefaultAnalysis::SaveTruth(art::Event const &e)
   return;
 }
 
-DEFINE_ART_CLASS_TOOL(DefaultAnalysis)
+DEFINE_ART_CLASS_TOOL(DefaultAnalysisNotNu)
 } // namespace analysis
 
 #endif

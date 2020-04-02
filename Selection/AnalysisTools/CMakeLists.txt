@@ -39,6 +39,10 @@ art_make( TOOL_LIBRARIES lardataobj_RecoBase
                          uboonecode_uboone_XGBoost
                          art_Persistency_Common
                          art_Framework_Services_System_TriggerNamesService_service
+
+
+                         lardataobj_RawData
+                         ubobj_Trigger
         )
 
 install_headers()

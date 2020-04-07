@@ -1204,6 +1204,10 @@ void DefaultAnalysisNotNu::SaveTruth(art::Event const &e)
   auto const &mcp_h = e.getValidHandle<std::vector<simb::MCParticle>>(fMCPproducer);
   
   auto mct = mct_h->at(0);
+
+  //This all breaks for HNL 
+  // Should prob have fcl param for HNL or Nu
+
   // auto neutrino = mct.GetNeutrino();
   // auto nu = neutrino.Nu();
 
@@ -1233,6 +1237,34 @@ void DefaultAnalysisNotNu::SaveTruth(art::Event const &e)
   //                                                 fFidvolXstart, fFidvolYstart, fFidvolZstart,
   //                                                 fFidvolXend, fFidvolYend, fFidvolZend);
 
+
+
+
+//Adding this for now, should work out properly, probs in an seperate tool
+  // For HNL MCpart is either pion or muons
+  const simb::MCParticle & mcPart = mct.GetParticle(0);
+
+  _true_nu_vtx_t = mcPart.T();
+  _true_nu_vtx_x = mcPart.Vx();
+  _true_nu_vtx_y = mcPart.Vy();
+  _true_nu_vtx_z = mcPart.Vz();
+
+  float _true_nu_vtx_sce[3];
+  searchingfornues::True2RecoMappingXYZ(_true_nu_vtx_t, _true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z, _true_nu_vtx_sce);
+
+  _true_nu_vtx_sce_x = _true_nu_vtx_sce[0];
+  _true_nu_vtx_sce_y = _true_nu_vtx_sce[1];
+  _true_nu_vtx_sce_z = _true_nu_vtx_sce[2];
+
+  // _theta = neutrino.Theta();
+  // _nu_pt = neutrino.Pt();
+
+  double vtx[3] = {_true_nu_vtx_x, _true_nu_vtx_y, _true_nu_vtx_z};
+  _isVtxInFiducial = searchingfornues::isFiducial(vtx,
+                                                  fFidvolXstart, fFidvolYstart, fFidvolZstart,
+                                                  fFidvolXend, fFidvolYend, fFidvolZend);
+  
+// end of owens hack
   _nelec = 0;
   _nmuon = 0;
   _npi0 = 0;

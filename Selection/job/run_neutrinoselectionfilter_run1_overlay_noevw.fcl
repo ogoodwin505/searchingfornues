@@ -6,6 +6,31 @@
 
 services.DetectorClocksService.TrigModuleName: "triggersim"
 
+
+physics.filters.nuselection.AnalysisTools: {
+    
+        default: @local::DefaultAnalysisToolNotNu
+        # you can add more analysis tools here
+        #slicepurcompl: @local::SlicePurComplTool #causes seg fault on HNL overlay
+        containment:   @local::ContainmentAnalysis
+        shower:        @local::ShowerAnalysisTool
+ #        #showerstart:        @local::ShowerStartPointTool  #commented out in defualt
+        track:         @local::TrackAnalysisTool
+        vertex:         @local::VertexAnalysisTool #commented out in default
+ #        #calorimetry:   @local::CalorimetryAnalysisTool #commented out in default
+        pmtnoise:      @local::PMTNoiseTool
+    mcs:           @local::MCSTool
+ #        #pi0truth:      @local::Pi0TruthAnalysisTool #seg faults HNL overlay
+        cosmicip:      @local::CosmicIPTool
+        nuenergy:      @local::NeutrinoEnergyTool
+        flashmatchid:  @local::FlashMatchingTool
+        pi0tagger:     @local::Pi0TaggerTool
+        # zbdt:          @local::BDTTool # seg fualts HNL #note: analysis tools are run in alphabetical order and this needs to be the last one
+        secondshower:  @local::SecondShowerTaggerTool
+        eventfilter:   @local::EventFilterTool
+        # mcfilter:      @local::MCFilterAnalysisTool #segfaults HNL
+    }
+ 
 physics.filters.nuselection.AnalysisTools.default.BacktrackTag: "gaushitTruthMatch"
 physics.filters.nuselection.IsData: false
 

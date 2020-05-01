@@ -121,24 +121,7 @@ DefaultAnalysisTool: {
 }
 
 
-DefaultAnalysisToolNotNu: {
-    tool_type: "DefaultAnalysisNotNu"
-    CRTVetoproducer: ""
-    CLSproducer: "pandora"
-    MCTproducer: "generator"
-    Hproducer: "gaushit"
-    BacktrackTag: "gaushitTruthMatch"
-    MCRproducer: "mcreco"
-    SLCproducer: "pandora"
-    MCPproducer: "largeant"
-    ProtonThreshold: 0.04 # GeV
-    fidvolXstart: 5.
-    fidvolXend: 5.
-    fidvolYstart: 6.
-    fidvolYend: 6.
-    fidvolZstart: 20.
-    fidvolZend: 50.
-}
+ 
 
 
 DefaultAnalysisToolNotNu: {
@@ -208,6 +191,18 @@ SlicePurComplTool: {
     Hproducer: "gaushit"
     HTproducer: "gaushitTruthMatch"
 }
+
+
+SlicePurComplToolNotNu: {
+    tool_type: "SlicePurComplNotNu"
+    CLSproducer: "pandora"
+    SLCproducer: "pandora"
+    MCTproducer: "generator"
+    MCPproducer: "largeant"
+    Hproducer: "gaushit"
+    HTproducer: "gaushitTruthMatch"
+}
+
 
 PMTNoiseTool: {
     tool_type: "PMTNoise"

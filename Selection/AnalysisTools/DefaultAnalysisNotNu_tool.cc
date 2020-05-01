@@ -273,6 +273,7 @@ private:
   float _true_pt;
   float _true_pt_visible;
   float _true_p;
+  float _true_InvMass;
   float _true_p_visible;
   float _true_e_visible;
   float _leeweight;
@@ -428,11 +429,14 @@ void DefaultAnalysisNotNu::analyzeEvent(art::Event const &e, bool fData)
   } // if MC
 
   // Grab CRT veto information if available - CRT should probably have its own tool?
+  std::cout<<"is bit before crtveto running:"<<fCRTVetoproducer<<std::endl;
   if (fCRTVetoproducer != "")
   {
+    std::cout<<"is crtveto running"<<std::endl;
     art::Handle<art::Assns<crt::CRTHit, recob::OpFlash, void>> crtveto_h;
     e.getByLabel(fCRTVetoproducer, crtveto_h);
     _crtveto = crtveto_h->size();
+    std::cout<<_crtveto<<std::endl;
     if (_crtveto == 1)
       _crthitpe = crtveto_h->at(0).first->peshit;
   } // if the CRT veto label has been defined
@@ -854,6 +858,7 @@ void DefaultAnalysisNotNu::setBranches(TTree *_tree)
   _tree->Branch("true_pt", &_true_pt, "true_pt/F");
   _tree->Branch("true_pt_visible", &_true_pt_visible, "true_pt_visible/F");
   _tree->Branch("true_p", &_true_p, "true_p/F");
+  _tree->Branch("true_InvMass", &_true_InvMass, "true_InvMass/F");
   _tree->Branch("true_p_visible", &_true_p_visible, "true_p_visible/F");
 
   _tree->Branch("true_e_visible", &_true_e_visible, "true_e_visible/F");
@@ -1182,6 +1187,7 @@ void DefaultAnalysisNotNu::resetTTree(TTree *_tree)
   _true_pt = 0;
   _true_pt_visible = 0;
   _true_p = 0;
+  _true_InvMass = 0;
   _true_p_visible = 0;
 
   _true_e_visible = 0;
@@ -1380,9 +1386,11 @@ void DefaultAnalysisNotNu::SaveTruth(art::Event const &e)
 
   } // for all MCParticles
 
-  _true_pt = total_p.Perp();
+  _true_pt = total_p.Perp(); 
   _true_pt_visible = total_p_visible.Perp();
-  _true_p = total_p.Mag();
+
+  _true_InvMass = total_p.Mag(); //this vector is a 4 vector so returning the magnitude gives the invariment mass not total mom
+  _true_p= total_p.Vect().Mag(); //total mom
   _true_p_visible = total_p_visible.Mag();
 
   for (size_t p = 0; p < mcp_h->size(); p++)
